@@ -3,15 +3,13 @@
 > 北京工商大学 2022 年 Python 数据分析及可视化基础  
 > 史胤隆 张依彤 2022 年 12 月
 
-
 我们选定了雷达图进行数据分析实验。我们确定的实验目标如下：
 
 - 了解雷达图的基本概念和使用场景
 - 使用 Python 生成适于雷达图的随机数据
-- 使用 pathlib 绘制雷达图
+- 使用 pyplot 绘制雷达图
 - 拓展：优化雷达图的视觉效果
 - 拓展：将雷达图的绘制封装为泛用性函数，方便后续使用
-
 
 ## 实验准备
 
@@ -27,10 +25,10 @@ import os
 
 print('已向系统发送安装命令, 请稍候... ')
 if not os.system('''
-pip install -U pip
-pip install -U numpy
-pip install -U pandas
-pip install -U matplotlib
+pip install pip
+pip install numpy
+pip install pandas
+pip install matplotlib
 
 '''):
     print('命令执行完毕, 请检查是否安装成功')
@@ -39,9 +37,8 @@ else:
 
 ```
 
-    已向系统发送安装命令, 请稍候... 
+    已向系统发送安装命令, 请稍候...
     命令执行完毕, 请检查是否安装成功
-
 
 ## 实验过程
 
@@ -49,6 +46,7 @@ else:
 
 雷达图是以从同一点开始的轴上表示的三个或更多个定量变量的二维图表的形式显示多变量数据的图形方法。轴的相对位置和角度通常是无信息的。使用雷达图表示的数据常常是一个主题的多个属性，雷达图不仅能够突出各个属性的数据，还能体现出多个属性数据直接的“面积感”，从而更好地反映出数据的整体情况——网络梗“六边形战士”就是一个很好的例子。
 
+<div STYLE="page-break-after: always;"></div>
 
 ### 二、使用 Python 生成适于雷达图的随机数据
 
@@ -93,19 +91,21 @@ if __name__ == '__main__':
 
     数据生成成功!
 
-<div STYLE="page-break-after: always;"></div>
 
-### 三、使用 pathlib 绘制雷达图
 
-常见的使用 pathlib 绘制雷达图的方法是使用极坐标折线图绘制闭合折线。
+### 三、使用 pyplot 绘制雷达图
+
+常见的使用 pyplot 绘制雷达图的方法是使用极坐标折线图绘制闭合折线。
 
 该方法得到的图像不够美观，但实现起来较为简单，也应用了课内的知识点。
 
 代码如下：
 
+<div STYLE="page-break-after: always;"></div>
+
 ```python
 """
-使用 pathlib 绘制雷达图
+使用 pyplot 绘制雷达图
 ------------------------------------------------------------
 这里读取上一段生成的 Excel 文件, 并绘制雷达图
 """
@@ -119,7 +119,7 @@ dir = Path('.').parent                      # 获取当前位置
 df = pd.read_excel(dir / 'data.xlsx')       # 读取 Data.xlsx 文件
 data = df.iloc[:, 1:].values                # 读取数据
 plt.figure(figsize=(12, 4), dpi=100)        # 设置画布大小和分辨率
-theta = [j * 2 * pi / 9 for j in range(10)] # 设置角度集 (0, 40, 80, ..., 360)
+theta = [j * 2 * pi / 9 for j in range(10)]  # 设置角度集 (0, 40, 80, ..., 360)
 for i in range(3):
     plt.subplot(1, 3, i + 1, polar=True)    # 设置子图
     rhos = list(data[i]) + [data[i][0]]     # 设置雷达图的半径集
@@ -128,9 +128,8 @@ plt.show()                                  # 显示图像
 
 ```
 
-
 ![01](01.png)
-    
+
 
 
 ### 四、优化雷达图的视觉效果
@@ -146,6 +145,8 @@ plt.show()                                  # 显示图像
 - 填充雷达图的闭合区域
 
 我们在上一部分代码的基础上进行修改，代码如下：
+
+<div STYLE="page-break-after: always;"></div>
 
 ```python
 """
@@ -184,10 +185,9 @@ plt.show()
 
 ```
 
-
 ![02](02.png)
-    
 
+<div STYLE="page-break-after: always;"></div>
 
 ### 五、将雷达图的绘制封装为泛用性函数，方便后续使用
 
@@ -206,6 +206,21 @@ plt.show()
 - 自动闭合数据集
 - 若没有指定，自动设置数据上限
 
+我们计划在此基础上将多个雷达图的绘制封装为函数。函数支持传入：
+
+- 标签集
+- 数据集列表
+- 数据上限 [可选]
+- 标题列表 [可选]
+- 颜色列表 [可选]
+
+函数能够：
+
+- 自动排除错误输入
+- 自动识别数据列表长度并合理处理
+- 若没有指定，自动设置数据上限
+- 若没有指定，自动生成颜色列表
+
 然后使用之前的数据，调用函数绘制多图。代码如下：
 
 ```python
@@ -215,13 +230,30 @@ plt.show()
 这里将上一段的雷达图绘制封装为泛用性函数, 以便后续的调用
 """
 
-import pandas as pd
-import matplotlib.pyplot as plt
-from math import pi
+NAMES = ['张三', '李四', '王五', '赵六', '孙七',
+         '周八', '吴九', '郑十', '钱十一', '冯十二']
+COURSES = ['语文', '数学', '英语', '物理', '化学', '生物', '政治', '历史', '地理']
+LIMIT = [60, 100]
 
 
-def plt_radar(labels: list, data: list, limit: int = 0, title: str = '', color: str = '#1f77b4') -> None:
+def generate():
+    """生成数据并存入 Excel 文件"""
+    import numpy as np
+    import pandas as pd
+    from pathlib import Path
+    dir = Path('.').parent
+    data = np.random.randint(LIMIT[0], LIMIT[1], (len(NAMES), len(COURSES)))
+    df = pd.DataFrame(data, index=NAMES, columns=COURSES)
+    df.to_excel(dir / 'data.xlsx')
+    print('数据生成成功!')
+
+
+def plt_radar(labels: list, data: list, limit: int = 0,
+              title: str = '', color: str = '#1f77b4') -> None:
     """单个雷达图的绘制"""
+    import pandas as pd
+    import matplotlib.pyplot as plt
+    from math import pi
     lenLabels = len(labels)
     lenData = len(data)
     if lenLabels != lenData:
@@ -243,31 +275,60 @@ def plt_radar(labels: list, data: list, limit: int = 0, title: str = '', color: 
         plt.text(theta[j], rhos[j] + 1, rhos[j],
                  ha='center', va='bottom', fontsize=10)
     plt.grid(c='gray', linestyle='--', alpha=0.5)        # 设置网格线
-    plt.fill(theta, rhos, alpha=0.1, color=colors[i])   # 填充雷达图
+    plt.fill(theta, rhos, alpha=0.1, color=color)   # 填充雷达图
+
+
+def plt_radars(labels: list, datas: list, limit: int = 0,
+               titles: list = [], colors: list = []) -> None:
+    """多个雷达图的绘制, 最多支持 16 个雷达图"""
+    import pandas as pd
+    import matplotlib.pyplot as plt
+    from math import pi
+    DEFULT_COLORS = ['r', 'g', 'b', 'y', 'c', 'm', '#1f77b4', '#ff7f0e',
+                     '#2ca02c', '#d62728', '#9467bd', '#8c564b',
+                     '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
+    lenRadars = len(datas)
+    lenTitles = len(titles)
+    lenColors = len(colors)
+    if not lenTitles:
+        titles = [''] * lenRadars
+    elif lenTitles != lenRadars:
+        raise ValueError(
+            'titles 和 datas 的长度不一致! | '
+            'Length of titles and datas are not equal!')
+    if not lenColors:
+        colors = DEFULT_COLORS[:lenRadars]
+    elif lenColors != lenRadars:
+        raise ValueError(
+            'colors 和 datas 的长度不一致! | '
+            'Length of colors and datas are not equal!')
+    row = lenRadars // 4 + 1
+    col = 4 if lenRadars >= 4 else lenRadars
+    plt.figure(figsize=(col*4, row*4), dpi=100)
+    for i in range(lenRadars):
+        plt.subplot(row, col, i + 1, polar=True)
+        plt_radar(labels, datas[i], limit, titles[i], colors[i])
 
 
 if __name__ == '__main__':
+    import pandas as pd
+    import matplotlib.pyplot as plt
     from pathlib import Path
+    generate()
     dir = Path('.').parent
     df = pd.read_excel(dir / 'data.xlsx')
-    plt.figure(figsize=(12, 4), dpi=100)
-    data = df.iloc[:, 1:].values
+    datas = df.iloc[:, 1:].values
     names = df.iloc[:, 0].values
     labels = df.columns[1:].values
-    colors = ['r', 'g', 'b']
-    for i in range(3):
-        plt.subplot(1, 3, i + 1, polar=True)
-        plt_radar(labels, data[i], 110, names[i], colors[i])
-    plt.show()
+    plt_radars(labels, datas, 110, names)
+    plt.tight_layout()
 
 ```
 
+    数据生成成功!
 
 ![03](03.png)
-    
-
 
 ## 实验总结
 
 在实验中，我们对本学期的多个核心知识点进行了复习和巩固，完成了既定的实验计划。
-
